@@ -3,12 +3,14 @@ mod encoder;
 mod keypad;
 mod misc;
 mod settings;
+mod will_appear;
 
 pub use devices::*;
 pub use encoder::*;
 pub use keypad::*;
 pub use misc::*;
 pub use settings::*;
+pub use will_appear::*;
 
 use crate::outbound::OutboundEventManager;
 
@@ -47,6 +49,10 @@ enum InboundEventType {
 	DialUp(DialPressEvent),
 	DialRotate(DialRotateEvent),
 	DidReceiveSettings(DidReceiveSettingsEvent),
+	WillAppear(AppearEvent),
+	WillDisappear(AppearEvent),
+	PropertyInspectorDidAppear(PropertyInspectorAppearEvent),
+	PropertyInspectorDidDisappear(PropertyInspectorAppearEvent),
 	/* Global events */
 	DidReceiveGlobalSettings(DidReceiveGlobalSettingsEvent),
 	DeviceDidConnect(DeviceDidConnectEvent),
@@ -143,6 +149,38 @@ pub trait ActionEventHandler {
 	) -> impl Future<Output = EventHandlerResult> + Send {
 		async { Ok(()) }
 	}
+
+	fn will_appear(
+		&self,
+		event: AppearEvent,
+		outbound: &mut OutboundEventManager,
+	) -> impl Future<Output = EventHandlerResult> + Send {
+		async { Ok(()) }
+	}
+
+	fn will_disappear(
+		&self,
+		event: AppearEvent,
+		outbound: &mut OutboundEventManager,
+	) -> impl Future<Output = EventHandlerResult> + Send {
+		async { Ok(()) }
+	}
+
+	fn property_inspector_did_appear(
+		&self,
+		event: PropertyInspectorAppearEvent,
+		outbound: &mut OutboundEventManager,
+	) -> impl Future<Output = EventHandlerResult> + Send {
+		async { Ok(()) }
+	}
+
+	fn property_inspector_did_disappear(
+		&self,
+		event: PropertyInspectorAppearEvent,
+		outbound: &mut OutboundEventManager,
+	) -> impl Future<Output = EventHandlerResult> + Send {
+		async { Ok(()) }
+	}
 }
 
 pub(crate) async fn process_incoming_messages(
@@ -184,6 +222,18 @@ pub(crate) async fn process_incoming_messages(
 				InboundEventType::DialRotate(event) => action_event_handler.dial_rotate(event, outbound).await,
 				InboundEventType::DidReceiveSettings(event) => {
 					action_event_handler.did_receive_settings(event, outbound).await
+				}
+				InboundEventType::WillAppear(event) => action_event_handler.will_appear(event, outbound).await,
+				InboundEventType::WillDisappear(event) => action_event_handler.will_disappear(event, outbound).await,
+				InboundEventType::PropertyInspectorDidAppear(event) => {
+					action_event_handler
+						.property_inspector_did_appear(event, outbound)
+						.await
+				}
+				InboundEventType::PropertyInspectorDidDisappear(event) => {
+					action_event_handler
+						.property_inspector_did_disappear(event, outbound)
+						.await
 				}
 				/* Global events */
 				InboundEventType::DidReceiveGlobalSettings(event) => {
