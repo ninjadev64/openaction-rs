@@ -8,6 +8,8 @@ use futures_util::StreamExt;
 pub use inbound::*;
 pub use outbound::OutboundEventManager;
 
+pub type SettingsValue = serde_json::Value;
+
 struct CliArgs {
 	_command: String,
 	port: String,
@@ -16,7 +18,10 @@ struct CliArgs {
 }
 
 /// Initialise the plugin and register it with the OpenAction server.
-pub async fn init_plugin(event_handler: impl inbound::ActionEventHandler) -> Result<(), anyhow::Error> {
+pub async fn init_plugin(
+	global_event_handler: impl inbound::GlobalEventHandler,
+	action_event_handler: impl inbound::ActionEventHandler,
+) -> Result<(), anyhow::Error> {
 	let mut args = std::env::args();
 	let args = CliArgs {
 		_command: args.next().unwrap(),
@@ -32,7 +37,7 @@ pub async fn init_plugin(event_handler: impl inbound::ActionEventHandler) -> Res
 	outbound.register(args.event, args.uuid).await?;
 	*outbound::OUTBOUND_EVENT_MANAGER.lock().await = Some(outbound);
 
-	inbound::process_incoming_messages(read, event_handler).await;
+	inbound::process_incoming_messages(read, global_event_handler, action_event_handler).await;
 
 	Ok(())
 }

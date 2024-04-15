@@ -1,8 +1,14 @@
+mod devices;
 mod encoder;
 mod keypad;
+mod misc;
+mod settings;
 
+pub use devices::*;
 pub use encoder::*;
 pub use keypad::*;
+pub use misc::*;
+pub use settings::*;
 
 use crate::outbound::OutboundEventManager;
 
@@ -23,7 +29,7 @@ pub struct Coordinates {
 #[derive(Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub struct GenericInstancePayload {
-	pub settings: serde_json::Value,
+	pub settings: crate::SettingsValue,
 	pub coordinates: Coordinates,
 	pub controller: String,
 	pub state: u16,
@@ -34,15 +40,58 @@ pub struct GenericInstancePayload {
 #[serde(tag = "event")]
 #[serde(rename_all = "camelCase")]
 enum InboundEventType {
+	/* Action events */
 	KeyDown(KeyEvent),
 	KeyUp(KeyEvent),
 	DialDown(DialPressEvent),
 	DialUp(DialPressEvent),
 	DialRotate(DialRotateEvent),
+	DidReceiveSettings(DidReceiveSettingsEvent),
+	/* Global events */
+	DidReceiveGlobalSettings(DidReceiveGlobalSettingsEvent),
+	DeviceDidConnect(DeviceDidConnectEvent),
+	DeviceDidDisconnect(DeviceDidDisconnectEvent),
+	SystemDidWakeUp(SystemDidWakeUpEvent),
 }
 
 /// The required return value for event handler functions. It is a ubiquitous Result type for convenience.
 pub type EventHandlerResult = Result<(), anyhow::Error>;
+
+/// A trait requiring methods for handling global events.
+#[allow(unused_variables)]
+pub trait GlobalEventHandler {
+	fn did_receive_global_settings(
+		&self,
+		event: DidReceiveGlobalSettingsEvent,
+		outbound: &mut OutboundEventManager,
+	) -> impl Future<Output = EventHandlerResult> + Send {
+		async { Ok(()) }
+	}
+
+	fn device_did_connect(
+		&self,
+		event: DeviceDidConnectEvent,
+		outbound: &mut OutboundEventManager,
+	) -> impl Future<Output = EventHandlerResult> + Send {
+		async { Ok(()) }
+	}
+
+	fn device_did_disconnect(
+		&self,
+		event: DeviceDidDisconnectEvent,
+		outbound: &mut OutboundEventManager,
+	) -> impl Future<Output = EventHandlerResult> + Send {
+		async { Ok(()) }
+	}
+
+	fn system_did_wake_up(
+		&self,
+		event: SystemDidWakeUpEvent,
+		outbound: &mut OutboundEventManager,
+	) -> impl Future<Output = EventHandlerResult> + Send {
+		async { Ok(()) }
+	}
+}
 
 /// A trait requiring methods for handling events related to an action.
 #[allow(unused_variables)]
@@ -86,11 +135,20 @@ pub trait ActionEventHandler {
 	) -> impl Future<Output = EventHandlerResult> + Send {
 		async { Ok(()) }
 	}
+
+	fn did_receive_settings(
+		&self,
+		event: DidReceiveSettingsEvent,
+		outbound: &mut OutboundEventManager,
+	) -> impl Future<Output = EventHandlerResult> + Send {
+		async { Ok(()) }
+	}
 }
 
 pub(crate) async fn process_incoming_messages(
 	mut stream: SplitStream<WebSocketStream<MaybeTlsStream<tokio::net::TcpStream>>>,
-	event_handler: impl ActionEventHandler,
+	global_event_handler: impl GlobalEventHandler,
+	action_event_handler: impl ActionEventHandler,
 ) {
 	while let Some(message) = stream.next().await {
 		let Ok(data) = message else {
@@ -118,11 +176,28 @@ pub(crate) async fn process_incoming_messages(
 			let outbound = lock.as_mut().unwrap();
 
 			if let Err(error) = match decoded {
-				InboundEventType::KeyDown(event) => event_handler.key_down(event, outbound).await,
-				InboundEventType::KeyUp(event) => event_handler.key_up(event, outbound).await,
-				InboundEventType::DialDown(event) => event_handler.dial_down(event, outbound).await,
-				InboundEventType::DialUp(event) => event_handler.dial_up(event, outbound).await,
-				InboundEventType::DialRotate(event) => event_handler.dial_rotate(event, outbound).await,
+				/* Action events */
+				InboundEventType::KeyDown(event) => action_event_handler.key_down(event, outbound).await,
+				InboundEventType::KeyUp(event) => action_event_handler.key_up(event, outbound).await,
+				InboundEventType::DialDown(event) => action_event_handler.dial_down(event, outbound).await,
+				InboundEventType::DialUp(event) => action_event_handler.dial_up(event, outbound).await,
+				InboundEventType::DialRotate(event) => action_event_handler.dial_rotate(event, outbound).await,
+				InboundEventType::DidReceiveSettings(event) => {
+					action_event_handler.did_receive_settings(event, outbound).await
+				}
+				/* Global events */
+				InboundEventType::DidReceiveGlobalSettings(event) => {
+					global_event_handler.did_receive_global_settings(event, outbound).await
+				}
+				InboundEventType::DeviceDidConnect(event) => {
+					global_event_handler.device_did_connect(event, outbound).await
+				}
+				InboundEventType::DeviceDidDisconnect(event) => {
+					global_event_handler.device_did_disconnect(event, outbound).await
+				}
+				InboundEventType::SystemDidWakeUp(event) => {
+					global_event_handler.system_did_wake_up(event, outbound).await
+				}
 			} {
 				log::error!("Failed to process inbound event: {}", error.to_string())
 			}
