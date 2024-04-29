@@ -2,7 +2,7 @@ use super::Coordinates;
 
 use serde::Deserialize;
 
-#[derive(Deserialize)]
+#[derive(Debug, Deserialize)]
 pub struct DialRotatePayload {
 	pub settings: serde_json::Value,
 	pub coordinates: Coordinates,
@@ -10,25 +10,23 @@ pub struct DialRotatePayload {
 	pub pressed: bool,
 }
 
-#[derive(Deserialize)]
+#[derive(Debug, Deserialize)]
 pub struct DialRotateEvent {
-	pub event: String,
 	pub action: String,
 	pub context: String,
 	pub device: String,
 	pub payload: DialRotatePayload,
 }
 
-#[derive(Deserialize)]
+#[derive(Debug, Deserialize)]
 pub struct DialPressPayload {
 	pub controller: String,
 	pub settings: serde_json::Value,
 	pub coordinates: Coordinates,
 }
 
-#[derive(Deserialize)]
+#[derive(Debug, Deserialize)]
 pub struct DialPressEvent {
-	pub event: String,
 	pub action: String,
 	pub context: String,
 	pub device: String,

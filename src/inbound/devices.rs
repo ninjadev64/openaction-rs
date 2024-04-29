@@ -1,12 +1,12 @@
 use serde::Deserialize;
 
-#[derive(Deserialize)]
+#[derive(Debug, Deserialize)]
 pub struct DeviceSizeInfo {
 	pub rows: u8,
 	pub columns: u8,
 }
 
-#[derive(Deserialize)]
+#[derive(Debug, Deserialize)]
 pub struct DeviceInfo {
 	pub id: String,
 	pub name: String,
@@ -14,16 +14,14 @@ pub struct DeviceInfo {
 	pub r#type: u8,
 }
 
-#[derive(Deserialize)]
+#[derive(Debug, Deserialize)]
 #[allow(non_snake_case)]
 pub struct DeviceDidConnectEvent {
-	pub event: String,
 	pub device: String,
 	pub deviceInfo: DeviceInfo,
 }
 
-#[derive(Deserialize)]
+#[derive(Debug, Deserialize)]
 pub struct DeviceDidDisconnectEvent {
-	pub event: String,
 	pub device: String,
 }

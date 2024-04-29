@@ -1,6 +1,4 @@
 use serde::Deserialize;
 
-#[derive(Deserialize)]
-pub struct SystemDidWakeUpEvent {
-	pub event: String,
-}
+#[derive(Debug, Deserialize)]
+pub struct SystemDidWakeUpEvent {}

@@ -2,18 +2,16 @@ use super::GenericInstancePayload;
 
 use serde::Deserialize;
 
-#[derive(Deserialize)]
+#[derive(Debug, Deserialize)]
 pub struct AppearEvent {
-	pub event: String,
 	pub action: String,
 	pub context: String,
 	pub device: String,
 	pub payload: GenericInstancePayload,
 }
 
-#[derive(Deserialize)]
+#[derive(Debug, Deserialize)]
 pub struct PropertyInspectorAppearEvent {
-	pub event: String,
 	pub action: String,
 	pub context: String,
 	pub device: String,
