@@ -6,7 +6,7 @@ use tokio_tungstenite::connect_async;
 use futures_util::StreamExt;
 
 pub use inbound::*;
-pub use outbound::OutboundEventManager;
+pub use outbound::{OutboundEventManager, OUTBOUND_EVENT_MANAGER};
 
 pub type SettingsValue = serde_json::Value;
 
