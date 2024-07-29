@@ -21,14 +21,14 @@ use serde::Deserialize;
 use tokio_tungstenite::{tungstenite::Message, MaybeTlsStream, WebSocketStream};
 
 /// A representation of the coordinates of an action instance.
-#[derive(Debug, Deserialize)]
+#[derive(Clone, Copy, Debug, Deserialize, PartialEq, Eq)]
 pub struct Coordinates {
 	pub row: u8,
 	pub column: u8,
 }
 
 /// A representation of the payload data that accompanies events related to actions.
-#[derive(Debug, Deserialize)]
+#[derive(Clone, Debug, Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub struct GenericInstancePayload {
 	pub settings: crate::SettingsValue,
@@ -38,7 +38,7 @@ pub struct GenericInstancePayload {
 	pub is_in_multi_action: bool,
 }
 
-#[derive(Deserialize)]
+#[derive(Clone, Deserialize)]
 #[serde(tag = "event")]
 #[serde(rename_all = "camelCase")]
 enum InboundEventType {

@@ -1,16 +1,18 @@
+use crate::SettingsValue;
+
 use super::Coordinates;
 
 use serde::Deserialize;
 
-#[derive(Debug, Deserialize)]
+#[derive(Clone, Debug, Deserialize)]
 pub struct DialRotatePayload {
-	pub settings: serde_json::Value,
+	pub settings: SettingsValue,
 	pub coordinates: Coordinates,
 	pub ticks: i16,
 	pub pressed: bool,
 }
 
-#[derive(Debug, Deserialize)]
+#[derive(Clone, Debug, Deserialize)]
 pub struct DialRotateEvent {
 	pub action: String,
 	pub context: String,
@@ -18,14 +20,14 @@ pub struct DialRotateEvent {
 	pub payload: DialRotatePayload,
 }
 
-#[derive(Debug, Deserialize)]
+#[derive(Clone, Debug, Deserialize)]
 pub struct DialPressPayload {
 	pub controller: String,
-	pub settings: serde_json::Value,
+	pub settings: SettingsValue,
 	pub coordinates: Coordinates,
 }
 
-#[derive(Debug, Deserialize)]
+#[derive(Clone, Debug, Deserialize)]
 pub struct DialPressEvent {
 	pub action: String,
 	pub context: String,

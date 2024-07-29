@@ -2,7 +2,7 @@ use super::GenericInstancePayload;
 
 use serde::Deserialize;
 
-#[derive(Debug, Deserialize)]
+#[derive(Clone, Debug, Deserialize)]
 pub struct KeyEvent {
 	pub action: String,
 	pub context: String,

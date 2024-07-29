@@ -1,4 +1,4 @@
 use serde::Deserialize;
 
-#[derive(Debug, Deserialize)]
+#[derive(Clone, Copy, Debug, Deserialize)]
 pub struct SystemDidWakeUpEvent {}
