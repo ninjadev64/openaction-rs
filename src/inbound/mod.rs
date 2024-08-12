@@ -53,6 +53,7 @@ enum InboundEventType {
 	WillDisappear(AppearEvent),
 	PropertyInspectorDidAppear(PropertyInspectorAppearEvent),
 	PropertyInspectorDidDisappear(PropertyInspectorAppearEvent),
+	TitleParametersDidChange(TitleParametersDidChangeEvent),
 	/* Global events */
 	DidReceiveGlobalSettings(DidReceiveGlobalSettingsEvent),
 	DeviceDidConnect(DeviceDidConnectEvent),
@@ -181,6 +182,14 @@ pub trait ActionEventHandler {
 	) -> impl Future<Output = EventHandlerResult> + Send {
 		async { Ok(()) }
 	}
+
+	fn title_parameters_did_change(
+		&self,
+		event: TitleParametersDidChangeEvent,
+		outbound: &mut OutboundEventManager,
+	) -> impl Future<Output = EventHandlerResult> + Send {
+		async { Ok(()) }
+	}
 }
 
 pub(crate) async fn process_incoming_messages(
@@ -234,6 +243,9 @@ pub(crate) async fn process_incoming_messages(
 					action_event_handler
 						.property_inspector_did_disappear(event, outbound)
 						.await
+				}
+				InboundEventType::TitleParametersDidChange(event) => {
+					action_event_handler.title_parameters_did_change(event, outbound).await
 				}
 				/* Global events */
 				InboundEventType::DidReceiveGlobalSettings(event) => {
