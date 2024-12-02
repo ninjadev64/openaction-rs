@@ -42,6 +42,13 @@ pub struct GenericInstancePayload {
 #[serde(tag = "event")]
 #[serde(rename_all = "camelCase")]
 enum InboundEventType {
+	/* Global events */
+	SetImage(SetImageEvent),
+	SetBrightness(SetBrightnessEvent),
+	DidReceiveGlobalSettings(DidReceiveGlobalSettingsEvent),
+	DeviceDidConnect(DeviceDidConnectEvent),
+	DeviceDidDisconnect(DeviceDidDisconnectEvent),
+	SystemDidWakeUp(SystemDidWakeUpEvent),
 	/* Action events */
 	KeyDown(KeyEvent),
 	KeyUp(KeyEvent),
@@ -54,11 +61,6 @@ enum InboundEventType {
 	PropertyInspectorDidAppear(PropertyInspectorAppearEvent),
 	PropertyInspectorDidDisappear(PropertyInspectorAppearEvent),
 	TitleParametersDidChange(TitleParametersDidChangeEvent),
-	/* Global events */
-	DidReceiveGlobalSettings(DidReceiveGlobalSettingsEvent),
-	DeviceDidConnect(DeviceDidConnectEvent),
-	DeviceDidDisconnect(DeviceDidDisconnectEvent),
-	SystemDidWakeUp(SystemDidWakeUpEvent),
 }
 
 /// The required return value for event handler functions. It is a ubiquitous Result type for convenience.
@@ -67,6 +69,26 @@ pub type EventHandlerResult = Result<(), anyhow::Error>;
 /// A trait requiring methods for handling global events.
 #[allow(unused_variables)]
 pub trait GlobalEventHandler {
+	fn plugin_ready(&self, outbound: &mut OutboundEventManager) -> impl Future<Output = EventHandlerResult> + Send {
+		async { Ok(()) }
+	}
+
+	fn set_image(
+		&self,
+		event: SetImageEvent,
+		outbound: &mut OutboundEventManager,
+	) -> impl Future<Output = EventHandlerResult> + Send {
+		async { Ok(()) }
+	}
+
+	fn set_brightness(
+		&self,
+		event: SetBrightnessEvent,
+		outbound: &mut OutboundEventManager,
+	) -> impl Future<Output = EventHandlerResult> + Send {
+		async { Ok(()) }
+	}
+
 	fn did_receive_global_settings(
 		&self,
 		event: DidReceiveGlobalSettingsEvent,
@@ -197,6 +219,14 @@ pub(crate) async fn process_incoming_messages(
 	global_event_handler: impl GlobalEventHandler,
 	action_event_handler: impl ActionEventHandler,
 ) {
+	{
+		let mut lock = crate::outbound::OUTBOUND_EVENT_MANAGER.lock().await;
+		let outbound = lock.as_mut().unwrap();
+		if let Err(error) = global_event_handler.plugin_ready(outbound).await {
+			log::error!("Failed to run plugin ready handler: {}", error);
+		}
+	}
+
 	while let Some(message) = stream.next().await {
 		let Ok(data) = message else {
 			continue;
@@ -223,6 +253,21 @@ pub(crate) async fn process_incoming_messages(
 			let outbound = lock.as_mut().unwrap();
 
 			if let Err(error) = match decoded {
+				/* Global events */
+				InboundEventType::SetImage(event) => global_event_handler.set_image(event, outbound).await,
+				InboundEventType::SetBrightness(event) => global_event_handler.set_brightness(event, outbound).await,
+				InboundEventType::DidReceiveGlobalSettings(event) => {
+					global_event_handler.did_receive_global_settings(event, outbound).await
+				}
+				InboundEventType::DeviceDidConnect(event) => {
+					global_event_handler.device_did_connect(event, outbound).await
+				}
+				InboundEventType::DeviceDidDisconnect(event) => {
+					global_event_handler.device_did_disconnect(event, outbound).await
+				}
+				InboundEventType::SystemDidWakeUp(event) => {
+					global_event_handler.system_did_wake_up(event, outbound).await
+				}
 				/* Action events */
 				InboundEventType::KeyDown(event) => action_event_handler.key_down(event, outbound).await,
 				InboundEventType::KeyUp(event) => action_event_handler.key_up(event, outbound).await,
@@ -246,19 +291,6 @@ pub(crate) async fn process_incoming_messages(
 				}
 				InboundEventType::TitleParametersDidChange(event) => {
 					action_event_handler.title_parameters_did_change(event, outbound).await
-				}
-				/* Global events */
-				InboundEventType::DidReceiveGlobalSettings(event) => {
-					global_event_handler.did_receive_global_settings(event, outbound).await
-				}
-				InboundEventType::DeviceDidConnect(event) => {
-					global_event_handler.device_did_connect(event, outbound).await
-				}
-				InboundEventType::DeviceDidDisconnect(event) => {
-					global_event_handler.device_did_disconnect(event, outbound).await
-				}
-				InboundEventType::SystemDidWakeUp(event) => {
-					global_event_handler.system_did_wake_up(event, outbound).await
 				}
 			} {
 				log::error!("Failed to process inbound event: {}", error.to_string())

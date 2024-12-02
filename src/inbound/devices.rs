@@ -25,3 +25,16 @@ pub struct DeviceDidConnectEvent {
 pub struct DeviceDidDisconnectEvent {
 	pub device: String,
 }
+
+#[derive(Clone, Debug, Deserialize)]
+pub struct SetImageEvent {
+	pub device: String,
+	pub position: Option<u8>,
+	pub image: Option<String>,
+}
+
+#[derive(Clone, Debug, Deserialize)]
+pub struct SetBrightnessEvent {
+	pub device: String,
+	pub brightness: u8,
+}

@@ -1,21 +1,26 @@
 [package]
 name = "openaction"
 description = "A crate for creating plugins for the OpenAction API."
-categories = [ "api-bindings", "asynchronous", "data-structures", "web-programming::websocket" ]
-authors = [ "ninjadev64" ]
-version = "1.0.1"
+categories = [
+	"api-bindings",
+	"asynchronous",
+	"data-structures",
+	"web-programming::websocket",
+]
+authors = ["ninjadev64"]
+version = "1.1.0"
 edition = "2021"
 license = "MIT"
 readme = "README.md"
-repository = "https://github.com/ninjadev64/openaction-rs/"
-homepage = "https://openaction.amansprojects.com"
+repository = "https://github.com/ninjadev64/openaction-rs"
+homepage = "https://openaction.amankhanna.me"
 
 [dependencies]
 anyhow = "1.0"
 futures-util = "0.3"
 log = "0.4"
-once_cell = "1.19"
-serde = { version = "1.0", features = [ "derive" ] }
+once_cell = "1.20"
+serde = { version = "1.0", features = ["derive"] }
 serde_json = "1.0"
-tokio = { version = "1.38", features = [ "rt", "net", "sync" ] }
-tokio-tungstenite = "0.23"
+tokio = { version = "1.38", features = ["rt", "net", "sync"] }
+tokio-tungstenite = "0.24"

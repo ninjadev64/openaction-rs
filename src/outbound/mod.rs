@@ -1,3 +1,4 @@
+mod devices;
 mod misc;
 mod settings;
 mod states;
