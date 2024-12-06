@@ -14,11 +14,6 @@ pub struct DeviceInfo {
 }
 
 #[derive(Serialize)]
-pub struct RegisterDevicePayload {
-	pub device: DeviceInfo,
-}
-
-#[derive(Serialize)]
 pub struct PressPayload {
 	pub device: String,
 	pub position: u8,
@@ -43,15 +38,13 @@ impl OutboundEventManager {
 	) -> Result<(), Error> {
 		self.send_event(PayloadEvent {
 			event: "registerDevice",
-			payload: RegisterDevicePayload {
-				device: DeviceInfo {
-					id,
-					name,
-					rows,
-					columns,
-					encoders,
-					r#type,
-				},
+			payload: DeviceInfo {
+				id,
+				name,
+				rows,
+				columns,
+				encoders,
+				r#type,
 			},
 		})
 		.await
