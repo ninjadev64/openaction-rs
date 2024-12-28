@@ -4,8 +4,8 @@ mod settings;
 mod states;
 
 use futures_util::{stream::SplitSink, SinkExt};
-use once_cell::sync::Lazy;
 use serde::Serialize;
+use std::sync::LazyLock;
 use tokio::sync::Mutex;
 use tokio_tungstenite::tungstenite::{Error, Message};
 
@@ -24,13 +24,13 @@ impl OutboundEventManager {
 
 	async fn send_event(&mut self, event: impl Serialize) -> Result<(), Error> {
 		self.sink
-			.send(Message::Text(serde_json::to_string(&event).unwrap()))
+			.send(Message::Text(serde_json::to_string(&event).unwrap().into()))
 			.await
 	}
 }
 
 /// The outbound event manager available for access outside of event handlers.
-pub static OUTBOUND_EVENT_MANAGER: Lazy<Mutex<Option<OutboundEventManager>>> = Lazy::new(|| Mutex::new(None));
+pub static OUTBOUND_EVENT_MANAGER: LazyLock<Mutex<Option<OutboundEventManager>>> = LazyLock::new(|| Mutex::new(None));
 
 #[derive(Serialize)]
 struct SimpleEvent {

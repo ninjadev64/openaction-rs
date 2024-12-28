@@ -58,6 +58,14 @@ impl OutboundEventManager {
 		.await
 	}
 
+	pub async fn rerender_images(&mut self, id: String) -> Result<(), Error> {
+		self.send_event(PayloadEvent {
+			event: "rerenderImages",
+			payload: id,
+		})
+		.await
+	}
+
 	pub async fn key_down(&mut self, device: String, position: u8) -> Result<(), Error> {
 		self.send_event(PayloadEvent {
 			event: "keyDown",
